@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Especialidad Médica</title>
+    <link rel="icon" href="./img/favicon.png" type="image/x-png" >
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@tailwindcss/browser@latest"></script>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(90deg, #e3ffe7 0%, #d9e7ff 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-6 rounded-lg">
+    <div class="max-w-4xl mx-auto bg-white shadow-md rounded-lg p-8">
+        <div style="display: flex; justify-content: center; align-items: center; height: 93px;">
+            <a href="index.html#servicios" title="Volver a Servicios">
+                <img style="text-align: center;" src="./img/logo.jpg" width="100" height="93"></a>
+        </div>
+        <h1 class="text-2xl font-semibold text-blue-600 mb-6 text-center">Crear Especialidad Médica</h1>
+        <form id="especialidadForm" class="space-y-4">
+            <div>
+                <label for="nombre" class="block text-gray-700 text-sm font-bold mb-2">Nombre de la Especialidad:</label>
+                <input type="text" id="nombre" name="nombre" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                <p id="nombre-error" class="text-red-500 text-xs italic" style="display: none;"></p>
+            </div>
+            <div>
+                <label for="descripcion" class="block text-gray-700 text-sm font-bold mb-2">Descripción:</label>
+                <textarea id="descripcion" name="descripcion" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
+                <p id="descripcion-error" class="text-red-500 text-xs italic" style="display: none;"></p>
+            </div>
+             <div>
+                <label for="area" class="block text-gray-700 text-sm font-bold mb-2">Área de la Medicina:</label>
+                <input type="text" id="area" name="area" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                <p id="area-error" class="text-red-500 text-xs italic" style="display: none;"></p>
+            </div>
+            <div>
+                <label for="medico_encargado" class="block text-gray-700 text-sm font-bold mb-2">Nombre del Médico a Cargo:</label>
+                <input type="text" id="medico_encargado" name="medico_encargado" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                <p id="medico_encargado_error" class="text-red-500 text-xs italic" style="display: none;"></p>
+            </div>
+            <div>
+                <label for="registro_medico" class="block text-gray-700 text-sm font-bold mb-2">Número de Registro Médico:</label>
+                <input type="text" id="registro_medico" name="registro_medico" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                <p id="registro_medico_error" class="text-red-500 text-xs italic" style="display: none;"></p>
+            </div>
+            <div>
+                <label for="procedimientos" class="block text-gray-700 text-sm font-bold mb-2">Procedimientos Médicos Ofrecidos:</label>
+                <textarea id="procedimientos" name="procedimientos" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
+                <p id="procedimientos-error" class="text-red-500 text-xs italic" style="display: none;"></p>
+            </div>
+            <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Crear Especialidad</button>
+            <button type="button" id="descargarExcel" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mt-4">Descargar Excel</button>
+        </form>
+
+        <h2 class="text-2xl font-semibold text-gray-800 mt-8 mb-4">Registros de Especialidades Médicas</h2>
+        <div id="tabla-container" class="overflow-x-auto">
+            <table id="especialidadesTable" class="min-w-full bg-white rounded-lg shadow-md">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Área</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Médico a Cargo</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registro Médico</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Procedimientos</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const especialidades = [];
+
+        document.getElementById('especialidadForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            let hasErrors = false;
+
+            const nombre = document.getElementById('nombre').value.trim();
+            const descripcion = document.getElementById('descripcion').value.trim();
+            const area = document.getElementById('area').value.trim();
+            const medico_encargado = document.getElementById('medico_encargado').value.trim();
+            const registro_medico = document.getElementById('registro_medico').value.trim();
+            const procedimientos = document.getElementById('procedimientos').value.trim();
+
+            const nombreError = document.getElementById('nombre-error');
+            const descripcionError = document.getElementById('descripcion-error');
+            const areaError = document.getElementById('area-error');
+            const medico_encargadoError = document.getElementById('medico_encargado_error');
+            const registro_medicoError = document.getElementById('registro_medico_error');
+            const procedimientosError = document.getElementById('procedimientos_error');
+
+
+            if (nombre === '') {
+                nombreError.textContent = 'Por favor, ingrese el nombre de la especialidad.';
+                nombreError.style.display = 'block';
+                hasErrors = true;
+            } else {
+                nombreError.style.display = 'none';
+            }
+
+            if (descripcion === '') {
+                descripcionError.textContent = 'Por favor, ingrese la descripción de la especialidad.';
+                descripcionError.style.display = 'block';
+                hasErrors = true;
+            } else {
+                descripcionError.style.display = 'none';
+            }
+
+            if (area === '') {
+                areaError.textContent = 'Por favor, ingrese el área de la especialidad.';
+                areaError.style.display = 'block';
+                hasErrors = true;
+            } else {
+                areaError.style.display = 'none';
+            }
+
+            if (medico_encargado === '') {
+                medico_encargadoError.textContent = 'Por favor, ingrese el nombre del médico a cargo.';
+                medico_encargadoError.style.display = 'block';
+                hasErrors = true;
+            } else {
+                medico_encargadoError.style.display = 'none';
+            }
+
+            if (registro_medico === '') {
+                registro_medicoError.textContent = 'Por favor, ingrese el número de registro médico.';
+                registro_medicoError.style.display = 'block';
+                hasErrors = true;
+            } else {
+                registro_medicoError.style.display = 'none';
+            }
+
+            if (procedimientos === '') {
+                procedimientosError.textContent = 'Por favor, ingrese los procedimientos médicos que ofrece la especialidad.';
+                procedimientosError.style.display = 'block';
+                hasErrors = true;
+            } else {
+                procedimientosError.style.display = 'none';
+            }
+
+
+            if (!hasErrors) {
+                especialidades.push({ nombre, descripcion, area, medico_encargado, registro_medico, procedimientos });
+                actualizarTabla();
+                document.getElementById('especialidadForm').reset();
+                alert('Especialidad médica creada con éxito!');
+            }
+        });
+
+        document.getElementById('descargarExcel').addEventListener('click', function() {
+            if (especialidades.length === 0) {
+                alert('No hay datos para descargar.');
+                return;
+            }
+            const data = especialidades.map(esp => ({
+                "Nombre de la Especialidad": esp.nombre,
+                "Descripción": esp.descripcion,
+                "Área de la Medicina": esp.area,
+                "Nombre del Médico a Cargo": esp.medico_encargado,
+                "Número de Registro Médico": esp.registro_medico,
+                "Procedimientos Médicos Ofrecidos": esp.procedimientos
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Especialidades");
+            XLSX.writeFile(wb, "especialidades_medicas.xlsx");
+        });
+
+        function actualizarTabla() {
+            const tablaBody = document.querySelector('#especialidadesTable tbody');
+            tablaBody.innerHTML = '';
+
+            especialidades.forEach((especialidad, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">${especialidad.nombre}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${especialidad.descripcion}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${especialidad.area}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${especialidad.medico_encargado}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${especialidad.registro_medico}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${especialidad.procedimientos}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-xs mr-1" onclick="editarRegistro(${index})">Editar</button>
+                        <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-xs" onclick="eliminarRegistro(${index})">Eliminar</button>
+                    </td>
+                `;
+                tablaBody.appendChild(row);
+            });
+        }
+
+        function editarRegistro(index) {
+            const especialidad = especialidades[index];
+            document.getElementById('nombre').value = especialidad.nombre;
+            document.getElementById('descripcion').value = especialidad.descripcion;
+            document.getElementById('area').value = especialidad.area;
+            document.getElementById('medico_encargado').value = especialidad.medico_encargado;
+            document.getElementById('registro_medico').value = especialidad.registro_medico;
+            document.getElementById('procedimientos').value = especialidad.procedimientos;
+
+            especialidades.splice(index, 1);
+            actualizarTabla();
+        }
+
+        function eliminarRegistro(index) {
+            especialidades.splice(index, 1);
+            actualizarTabla();
+        }
+    </script>
+</body>
+</html>

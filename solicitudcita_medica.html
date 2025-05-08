@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solicitud de Citas Médicas</title>
+    <link rel="icon" href="./img/favicon.png" type="image/x-png" >
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(90deg, #e3ffe7 0%, #d9e7ff 100%);
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            padding: 2rem;
+            background-color: #fff;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .heading {
+            font-size: 2.25rem;
+            font-weight: 600;
+            color: #1e40af;
+            margin-bottom: 2rem;
+            text-align: center;
+           justify-content: center;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #4a5568;
+            margin-bottom: 0.5rem;
+        }
+        .input, .select, .textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 0.375rem;
+            border: 1px solid #e2e8f0;
+            font-size: 1rem;
+            color: #4a5568;
+            outline: none;
+            transition: border-color 0.15s ease-in-out, shadow-sm 0.15s ease-in-out;
+        }
+        .input:focus, .select:focus, .textarea:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        .textarea {
+            min-height: 6rem;
+            resize: vertical;
+        }
+        .error-message {
+            color: #e53e3e;
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+        .submit-button {
+            background-color: #10b981;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease;
+            width: 100%;
+            display: block;
+            margin-top: 0.75rem;
+        }
+        .submit-button:hover {
+            background-color: #059669;
+            transform: translateY(-1px);
+        }
+        .table-container {
+            margin-top: 2rem;
+            overflow-x: auto;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            border-radius: 0.375rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1rem;
+        }
+        .table-header {
+            background-color: #f0f4f8;
+            color: #4a5568;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-align: left;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .table-row {
+            background-color: white;
+            color: #718096;
+            font-size: 0.9rem;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .table-row:nth-child(odd) {
+            background-color: #edf2f7;
+        }
+        .table-row:last-child {
+            border-bottom: none;
+        }
+        .table-cell {
+            padding: 0.75rem 1rem;
+            text-align: left;
+        }
+        .actions-cell {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+        }
+        .edit-button, .delete-button {
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.2s ease-in-out, transform 0.1s ease;
+        }
+        .edit-button {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .edit-button:hover {
+            background-color: #2563eb;
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        .delete-button {
+            background-color: #ef4444;
+            color: white;
+        }
+        .delete-button:hover {
+            background-color: #c81e1e;
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        .alert {
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            border-radius: 0.375rem;
+            font-size: 1rem;
+        }
+        .alert-success {
+            background-color: #f0fdf4;
+            border: 1px solid #34d399;
+            color: #065f46;
+        }
+        .alert-error {
+            background-color: #fee2e2;
+            border: 1px solid #dc2626;
+            color: #b91c1c;
+        }
+        .export-button {
+            background-color: #10b981;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease;
+            margin-top: 1.5rem;
+            width: 100%;
+            text-align: center;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .export-button:hover {
+            background-color: #059669;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-6">
+    
+    <div class="container">
+        <div style="display: flex; justify-content: center; align-items: center; height: 93px;">
+            <a href="index.html#servicios" title="Volver a Servicios"><img src="./img/logo.jpg" width="100" height="93"></a>
+        </div>
+        <h1 class="heading">Solicitud de Citas Médicas</h1>
+        <form id="citaForm" class="form-container" novalidate>
+            <div class="form-group">
+                <label for="tipo_documento" class="label">Tipo de Documento:</label>
+                <select id="tipo_documento" name="tipo_documento" required class="input">
+                    <option value="CC">Cédula de Ciudadanía</option>
+                    <option value="TI">Tarjeta de Identidad</option>
+                    <option value="CE">Cédula de Extranjería</option>
+                    <option value="Otro">Otro</option>
+                </select>
+                <div id="tipo_documento_error" class="error-message">Por favor, seleccione el tipo de documento.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="numero_documento" class="label">Número de Documento:</label>
+                <input type="text" id="numero_documento" name="numero_documento" required class="input">
+                <div id="numero_documento_error" class="error-message">Por favor, ingrese el número de documento.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="nombre_paciente" class="label">Nombre del Paciente:</label>
+                <input type="text" id="nombre_paciente" name="nombre_paciente" required class="input">
+                <div id="nombre_paciente_error" class="error-message">Por favor, ingrese el nombre del paciente.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="apellido_paciente" class="label">Apellido del Paciente:</label>
+                <input type="text" id="apellido_paciente" name="apellido_paciente" required class="input">
+                <div id="apellido_paciente_error" class="error-message">Por favor, ingrese el apellido del paciente.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="direccion" class="label">Dirección:</label>
+                <input type="text" id="direccion" name="direccion" required class="input">
+                <div id="direccion_error" class="error-message">Por favor, ingrese la dirección.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="telefono" class="label">Teléfono:</label>
+                <input type="tel" id="telefono" name="telefono" required class="input">
+                <div id="telefono_error" class="error-message">Por favor, ingrese el teléfono.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="email" class="label">Email:</label>
+                <input type="email" id="email" name="email" required class="input">
+                <div id="email_error" class="error-message">Por favor, ingrese el email.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="fecha_hora_cita" class="label">Fecha y Hora de la Cita:</label>
+                <input type="datetime-local" id="fecha_hora_cita" name="fecha_hora_cita" required class="input">
+                <div id="fecha_hora_cita_error" class="error-message">Por favor, ingrese la fecha y hora de la cita.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="motivo_cita" class="label">Motivo de la Cita:</label>
+                <textarea id="motivo_cita" name="motivo_cita" required class="textarea"></textarea>
+                <div id="motivo_cita_error" class="error-message">Por favor, ingrese el motivo de la cita.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="estado_cita" class="label">Estado de la Cita:</label>
+                <select id="estado_cita" name="estado_cita" required class="select">
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="Confirmada">Confirmada</option>
+                    <option value="Cancelada">Cancelada</option>
+                    <option value="Realizada">Realizada</option>
+                </select>
+                <div id="estado_cita_error" class="error-message">Por favor, seleccione el estado de la cita.</div>
+            </div>
+
+            <button type="submit" class="submit-button">Solicitar Cita</button>
+        </form>
+
+        <div id="alert-container" class="mt-6">
+        </div>
+
+        <div class="table-container">
+            <table id="citasTable" class="table">
+                <thead class="table-header-group">
+                    <tr class="table-row">
+                        <th class="table-header">ID Cita</th>
+                        <th class="table-header">Tipo Documento</th>
+                        <th class="table-header">Número Documento</th>
+                        <th class="table-header">Nombre Paciente</th>
+                        <th class="table-header">Apellido Paciente</th>
+                        <th class="table-header">Dirección</th>
+                        <th class="table-header">Teléfono</th>
+                        <th class="table-header">Email</th>
+                        <th class="table-header">Fecha y Hora</th>
+                        <th class="table-header">Motivo</th>
+                        <th class="table-header">Estado</th>
+                        <th class="table-header">Fecha Solicitud</th>
+                        <th class="table-header">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="table-body">
+                </tbody>
+            </table>
+        </div>
+        <button id="exportarExcel" class="export-button">Exportar a Excel</button>
+    </div>
+
+    <script>
+        // Función para mostrar alertas
+        function showAlert(message, type = 'success') {
+            const alertContainer = document.getElementById('alert-container');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            alertContainer.appendChild(alertDiv);
+
+            // Eliminar la alerta después de 5 segundos
+            setTimeout(() => alertDiv.remove(), 5000);
+        }
+
+        // Función para validar el formulario
+        function validateForm() {
+            let isValid = true;
+            const tipoDocumento = document.getElementById('tipo_documento').value;
+            const numeroDocumento = document.getElementById('numero_documento').value;
+            const nombrePaciente = document.getElementById('nombre_paciente').value;
+            const apellidoPaciente = document.getElementById('apellido_paciente').value;
+            const direccion = document.getElementById('direccion').value;
+            const telefono = document.getElementById('telefono').value;
+            const email = document.getElementById('email').value;
+            const fechaHoraCita = document.getElementById('fecha_hora_cita').value;
+            const motivoCita = document.getElementById('motivo_cita').value;
+            const estadoCita = document.getElementById('estado_cita').value;
+
+            if (!tipoDocumento) {
+                formErrorResponse('tipo_documento_error', 'Por favor, seleccione el tipo de documento.');
+                isValid = false;
+            } else {
+                document.getElementById('tipo_documento_error').style.display = 'none';
+            }
+            if (!numeroDocumento) {
+                formErrorResponse('numero_documento_error', 'Por favor, ingrese el número de documento.');
+                isValid = false;
+            } else {
+                document.getElementById('numero_documento_error').style.display = 'none';
+            }
+            if (!nombrePaciente) {
+                formErrorResponse('nombre_paciente_error', 'Por favor, ingrese el nombre del paciente.');
+                isValid = false;
+            } else {
+                document.getElementById('nombre_paciente_error').style.display = 'none';
+            }
+            if (!apellidoPaciente) {
+                formErrorResponse('apellido_paciente_error', 'Por favor, ingrese el apellido del paciente.');
+                isValid = false;
+            } else {
+                document.getElementById('apellido_paciente_error').style.display = 'none';
+            }
+            if (!direccion) {
+                formErrorResponse('direccion_error', 'Por favor, ingrese la dirección.');
+                isValid = false;
+            } else {
+                document.getElementById('direccion_error').style.display = 'none';
+            }
+            if (!telefono) {
+                formErrorResponse('telefono_error', 'Por favor, ingrese el teléfono.');
+                isValid = false;
+            } else {
+                document.getElementById('telefono_error').style.display = 'none';
+            }
+            if (!email) {
+                formErrorResponse('email_error', 'Por favor, ingrese el email.');
+                isValid = false;
+            } else {
+                document.getElementById('email_error').style.display = 'none';
+            }
+            if (!fechaHoraCita) {
+                formErrorResponse('fecha_hora_cita_error', 'Por favor, ingrese la fecha y hora de la cita.');
+                isValid = false;
+            } else {
+                document.getElementById('fecha_hora_cita_error').style.display = 'none';
+            }
+            if (!motivoCita) {
+                formErrorResponse('motivo_cita_error', 'Por favor, ingrese el motivo de la cita.');
+                isValid = false;
+            } else {
+                document.getElementById('motivo_cita_error').style.display = 'none';
+            }
+            if (!estadoCita) {
+                formErrorResponse('estado_cita_error', 'Por favor, seleccione el estado de la cita.');
+                isValid = false;
+            } else {
+                document.getElementById('estado_cita_error').style.display = 'none';
+            }
+            return isValid;
+        }
+
+        function formErrorResponse(inputID, response) {
+            const errorElement = document.getElementById(inputID);
+            errorElement.textContent = response;
+            errorElement.style.display = 'block';
+        }
+
+        // Simulación de la base de datos en memoria (usar localStorage para persistencia)
+        let citas = JSON.parse(localStorage.getItem('citas')) || [];
+        let proximoIdCita = parseInt(localStorage.getItem('proximoIdCita')) || 1;
+
+        // Función para insertar una nueva cita
+        function insertarCita(nuevaCita) {
+            nuevaCita.cita_id = proximoIdCita++;
+            nuevaCita.fecha_solicitud = new Date().toISOString();
+            citas.push(nuevaCita);
+            localStorage.setItem('citas', JSON.stringify(citas));
+            localStorage.setItem('proximoIdCita', proximoIdCita);
+            showAlert('Cita registrada exitosamente', 'success');
+            actualizarTablaCitas();
+        }
+
+        // Función para obtener todas las citas
+        function obtenerCitas() {
+            return citas;
+        }
+
+        // Función para actualizar la tabla de citas en el HTML
+        function actualizarTablaCitas() {
+            const tablaCitasBody = document.querySelector('#citasTable tbody');
+            tablaCitasBody.innerHTML = '';
+
+            const citas = obtenerCitas();
+            citas.forEach(cita => {
+                const row = document.createElement('tr');
+                row.className = 'table-row';
+                row.innerHTML = `
+                    <td class="table-cell">${cita.cita_id}</td>
+                    <td class="table-cell">${cita.tipo_documento}</td>
+                    <td class="table-cell">${cita.numero_documento}</td>
+                    <td class="table-cell">${cita.nombre_paciente}</td>
+                    <td class="table-cell">${cita.apellido_paciente}</td>
+                    <td class="table-cell">${cita.direccion}</td>
+                    <td class="table-cell">${cita.telefono}</td>
+                    <td class="table-cell">${cita.email}</td>
+                    <td class="table-cell">${cita.fecha_hora_cita}</td>
+                    <td class="table-cell">${cita.motivo_cita}</td>
+                    <td class="table-cell">${cita.estado_cita}</td>
+                    <td class="table-cell">${cita.fecha_solicitud}</td>
+                    <td class="table-cell actions-cell">
+                        <button class="edit-button" data-id="${cita.cita_id}">Editar</button>
+                        <button class="delete-button" data-id="${cita.cita_id}">Eliminar</button>
+                    </td>
+                `;
+                tablaCitasBody.appendChild(row);
+            });
+
+            agregarEventosBotones();
+        }
+
+        function editarCita(id) {
+            const cita = citas.find(c => c.cita_id === id);
+            if (!cita) {
+                showAlert('No se encontró la cita para editar', 'error');
+                return;
+            }
+
+            // Precarga los valores del formulario con los datos de la cita
+            document.getElementById('tipo_documento').value = cita.tipo_documento;
+            document.getElementById('numero_documento').value = cita.numero_documento;
+            document.getElementById('nombre_paciente').value = cita.nombre_paciente;
+            document.getElementById('apellido_paciente').value = cita.apellido_paciente;
+            document.getElementById('direccion').value = cita.direccion;
+            document.getElementById('telefono').value = cita.telefono;
+            document.getElementById('email').value = cita.email;
+            document.getElementById('fecha_hora_cita').value = cita.fecha_hora_cita;
+            document.getElementById('motivo_cita').value = cita.motivo_cita;
+            document.getElementById('estado_cita').value = cita.estado_cita;
+
+            // Cambiar el texto del botón de enviar a "Guardar Cambios"
+            const submitButton = document.querySelector('button[type="submit"]');
+            submitButton.textContent = 'Guardar Cambios';
+
+            // Almacenar el ID de la cita que se está editando
+            submitButton.dataset.editingId = id;
+
+            // Prevenir el comportamiento por defecto del formulario al enviar
+            const form = document.getElementById('citaForm');
+            form.removeEventListener('submit', manejarFormulario);
+            form.addEventListener('submit', guardarCambiosCita);
+        }
+
+        function guardarCambiosCita(event) {
+            event.preventDefault();
+
+            if (!validateForm()) {
+                return;
+            }
+
+            const id = parseInt(document.querySelector('button[type="submit"]').dataset.editingId);
+            const citaIndex = citas.findIndex(c => c.cita_id === id);
+
+            if (citaIndex === -1) {
+                showAlert('No se pudo actualizar la cita', 'error');
+                return;
+            }
+
+            // Actualizar los datos de la cita con los valores del formulario
+            citas[citaIndex].tipo_documento = document.getElementById('tipo_documento').value;
+            citas[citaIndex].numero_documento = document.getElementById('numero_documento').value;
+            citas[citaIndex].nombre_paciente = document.getElementById('nombre_paciente').value;
+            citas[citaIndex].apellido_paciente = document.getElementById('apellido_paciente').value;
+            citas[citaIndex].direccion = document.getElementById('direccion').value;
+            citas[citaIndex].telefono = document.getElementById('telefono').value;
+            citas[citaIndex].email = document.getElementById('email').value;
+            citas[citaIndex].fecha_hora_cita = document.getElementById('fecha_hora_cita').value;
+            citas[citaIndex].motivo_cita = document.getElementById('motivo_cita').value;
+            citas[citaIndex].estado_cita = document.getElementById('estado_cita').value;
+
+            localStorage.setItem('citas', JSON.stringify(citas));
+            showAlert('Cita actualizada correctamente', 'success');
+
+            // Restaurar el formulario a su estado original
+            document.querySelector('button[type="submit"]').textContent = 'Solicitar Cita';
+            delete document.querySelector('button[type="submit"]').dataset.editingId;
+            document.getElementById('citaForm').reset();
+
+            // Restaurar el listener del formulario para crear nuevas citas
+            const form = document.getElementById('citaForm');
+            form.removeEventListener('submit', guardarCambiosCita);
+            form.addEventListener('submit', manejarFormulario);
+
+            actualizarTablaCitas();
+        }
+
+        function eliminarCita(id) {
+            if (confirm('¿Está seguro de que desea eliminar esta cita?')) {
+                const citaIndex = citas.findIndex(c => c.cita_id === id);
+                if (citaIndex !== -1) {
+                    citas.splice(citaIndex, 1);
+                    localStorage.setItem('citas', JSON.stringify(citas));
+                    showAlert('Cita eliminada correctamente', 'success');
+                    actualizarTablaCitas();
+                } else {
+                    showAlert('No se encontró la cita para eliminar', 'error');
+                }
+            }
+        }
+
+        function agregarEventosBotones() {
+            const botonesEditar = document.querySelectorAll('.edit-button');
+            const botonesEliminar = document.querySelectorAll('.delete-button');
+
+            botonesEditar.forEach(boton => {
+                boton.addEventListener('click', () => {
+                    const id = parseInt(boton.dataset.id);
+                    editarCita(id);
+                });
+            });
+
+            botonesEliminar.forEach(boton => {
+                boton.addEventListener('click', () => {
+                    const id = parseInt(boton.dataset.id);
+                    eliminarCita(id);
+                });});
+        }
+
+        // Evento para manejar el envío del formulario de nueva cita
+        function manejarFormulario(event) {
+            event.preventDefault();
+
+            if (!validateForm()) {
+                return;
+            }
+
+            const nuevaCita = {
+                tipo_documento: document.getElementById('tipo_documento').value,
+                numero_documento: document.getElementById('numero_documento').value,
+                nombre_paciente: document.getElementById('nombre_paciente').value,
+                apellido_paciente: document.getElementById('apellido_paciente').value,
+                direccion: document.getElementById('direccion').value,
+                telefono: document.getElementById('telefono').value,
+                email: document.getElementById('email').value,
+                fecha_hora_cita: document.getElementById('fecha_hora_cita').value,
+                motivo_cita: document.getElementById('motivo_cita').value,
+                estado_cita: document.getElementById('estado_cita').value,
+            };
+            insertarCita(nuevaCita);
+            document.getElementById('citaForm').reset();
+        }
+
+        // Agregar event listener al formulario para el envío de nuevas citas
+        const form = document.getElementById('citaForm');
+        form.addEventListener('submit', manejarFormulario);
+
+        // Mostrar las citas iniciales al cargar la página
+        actualizarTablaCitas();
+
+        // Función para exportar los datos a Excel
+        function exportarDatosExcel() {
+            const citas = obtenerCitas();
+            if (citas.length === 0) {
+                showAlert('No hay datos para exportar', 'error');
+                return;
+            }
+
+            // Crear un nuevo libro de Excel
+            const libro = XLSX.utils.book_new();
+
+            // Convertir el array de objetos a una hoja de trabajo de Excel
+            const hoja = XLSX.utils.json_to_sheet(citas);
+
+            // Agregar la hoja de trabajo al libro
+            XLSX.utils.book_append_sheet(libro, hoja, 'Citas Médicas');
+
+            // Generar el archivo Excel
+            XLSX.writeFile(libro, 'citas_medicas.xlsx');
+        }
+
+        // Agregar event listener al botón de exportar a Excel
+        const exportarExcelBtn = document.getElementById('exportarExcel');
+        exportarExcelBtn.addEventListener('click', exportarDatosExcel);
+    </script>
+</body>
+</html>
